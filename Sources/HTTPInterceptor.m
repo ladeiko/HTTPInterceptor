@@ -78,7 +78,7 @@ static NSMutableArray<NSDictionary*>* g_preprocessor = nil;
         NSString* localFilePath = nil;
         
         BOOL isDirectory = NO;
-        
+
         if ([[NSFileManager defaultManager] fileExistsAtPath:localUrl.path isDirectory:&isDirectory] && !isDirectory) {
             if (match) {
                 localFilePath = localUrl.path;
@@ -89,11 +89,28 @@ static NSMutableArray<NSDictionary*>* g_preprocessor = nil;
             }
         }
         else {
+            
+            NSURLComponents* const targetComponents = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+            NSString* targetPath = [targetComponents path];
+            
+            if ([targetPath hasSuffix:@"/"]) {
+                targetPath = [targetPath substringToIndex:[targetPath length] - 1];
+            }
 
             NSURLComponents* const components = [NSURLComponents componentsWithURL:request.URL resolvingAgainstBaseURL:NO];
-            NSString* const path = [components path];
+            NSString* path = [components path];
             
-            localFilePath = [[localUrl URLByAppendingPathComponent:path] path];
+            if ([path hasSuffix:@"/"]) {
+                path = [path substringToIndex:[path length] - 1];
+            }
+            
+            path = [path substringFromIndex:[targetPath length]];
+            
+            if ([path hasPrefix:@"/"]) {
+                path = [path substringFromIndex:1];
+            }
+            
+            localFilePath = [path length] ? [[localUrl URLByAppendingPathComponent:path] path] : [localUrl path];
             
             if (![[NSFileManager defaultManager] fileExistsAtPath:localFilePath isDirectory:&isDirectory]) {
                 f404();

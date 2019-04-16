@@ -95,7 +95,13 @@ class HTTPInterceptorDemoTests: XCTestCase {
     }
     
     func testFolderMapping() {
-        let localURL = URL(fileURLWithPath: NSTemporaryDirectory().appending("local"))
+        
+        let localURL = URL(fileURLWithPath: NSTemporaryDirectory().appending(UUID().uuidString))
+        
+        self.addTeardownBlock {
+            try? FileManager.default.removeItem(at: localURL)
+        }
+        
         try! FileManager.default.createDirectory(at: localURL, withIntermediateDirectories: true, attributes: nil)
         
         let content1 = UUID().uuidString
@@ -113,6 +119,40 @@ class HTTPInterceptorDemoTests: XCTestCase {
         XCTAssert(actual2 == content2)
         
         XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com/content3.txt")!))
+        
+        HTTPInterceptor.remove(forKey: key)
+    }
+    
+    func testFolderWithSubpathMapping() {
+        
+        let localURL = URL(fileURLWithPath: NSTemporaryDirectory().appending(UUID().uuidString))
+        
+        self.addTeardownBlock {
+            try? FileManager.default.removeItem(at: localURL)
+        }
+        
+        try! FileManager.default.createDirectory(at: localURL, withIntermediateDirectories: true, attributes: nil)
+        
+        let content1 = UUID().uuidString
+        try! content1.write(to: localURL.appendingPathComponent("content1.txt"), atomically: true, encoding: .utf8)
+        
+        let content2 = UUID().uuidString
+        try! content2.write(to: localURL.appendingPathComponent("content2.txt"), atomically: true, encoding: .utf8)
+        
+        let key = HTTPInterceptor.mapUrl(URL(string: "http://hello.com/sub")!, toLocalPathUrl: localURL)
+        
+        XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com")!))
+        XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com/")!))
+        XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com/sub")!))
+        XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com/sub/")!))
+        
+        let actual1 = try! String(contentsOf: URL(string: "http://hello.com/sub/content1.txt")!)
+        XCTAssert(actual1 == content1)
+        
+        let actual2 = try! String(contentsOf: URL(string: "http://hello.com/sub/content2.txt")!)
+        XCTAssert(actual2 == content2)
+        
+        XCTAssertThrowsError(try String(contentsOf: URL(string: "http://hello.com/sub/content3.txt")!))
         
         HTTPInterceptor.remove(forKey: key)
     }

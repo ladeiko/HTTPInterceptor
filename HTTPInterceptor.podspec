@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "HTTPInterceptor"
-  s.version      = "1.0.1"
+  s.version      = "1.0.2"
   s.summary      = "HTTPInterceptor - code to intercept http requests and reply with custom response"
 
   s.homepage         = "https://github.com/ladeiko/HTTPInterceptor"
